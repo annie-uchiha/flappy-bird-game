@@ -1,0 +1,27 @@
+.game-container {
+  position: relative;
+  width: 800px;
+  height: 600px;
+}
+
+.scoreboard {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-size: 24px;
+}
+
+.game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+canvas {
+  border: 1px solid #000;
+}
