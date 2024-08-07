@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import backgroundImageSrc from '../images/22422-3840x2160-desktop-4k-leaf-background-image.jpg';
-import birdImage1Src from '../images/bird-fly-1.png'; // First frame of main bird animation
-import birdImage2Src from '../images/bird-fly-2.png'; // Second frame of main bird animation
-import obstacleBirdSmallSrc from '../images/obstacle-bird-small.png'; // Small obstacle bird
-import obstacleBirdMediumSrc from '../images/obstacle-bird-medium.png'; // Medium obstacle bird
-import obstacleBirdLargeSrc from '../images/obstacle-bird-large.png'; // Large obstacle bird
+import birdImage1Src from '../images/bird-fly-1.png'; 
+import birdImage2Src from '../images/bird-fly-2.png'; 
+import obstacleBirdSmallSrc from '../images/obstacle-bird-small.png'; 
+import obstacleBirdMediumSrc from '../images/obstacle-bird-medium.png'; 
+import obstacleBirdLargeSrc from '../images/obstacle-bird-large.png'; 
 
 const CANVAS_WIDTH = window.innerWidth;
 const CANVAS_HEIGHT = window.innerHeight;
 const BIRD_WIDTH = 50;
 const BIRD_HEIGHT = 50;
-const OBSTACLE_INTERVAL = 3000; // Interval in milliseconds
-const OBSTACLE_SPEED = 5; // Speed at which obstacles move
+const OBSTACLE_INTERVAL = 3000; 
+const OBSTACLE_SPEED = 4; 
 
 interface Obstacle {
   x: number;
@@ -168,7 +168,7 @@ const Game: React.FC = () => {
         }
         return filteredObstacles;
       });
-    }, 100);
+    }, OBSTACLE_INTERVAL / 3); 
 
     return () => clearInterval(interval);
   }, [isGameOver]);
@@ -203,13 +203,25 @@ const Game: React.FC = () => {
     checkCollision();
   }, [birdY, obstacles]);
 
+  const handleRestart = () => {
+    setIsGameOver(false);
+    setObstacles([]);
+    setScore(0);
+    setBirdY(CANVAS_HEIGHT / 2 - BIRD_WIDTH / 2);
+  };
+
   return (
     <div>
       <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
       <div className="scoreboard">
         Score: {score}
       </div>
-      {isGameOver && <div className="game-over">Game Over</div>}
+      {isGameOver && (
+        <div>
+          <div className="game-over">Game Over</div>
+          <button onClick={handleRestart}>Restart</button>
+        </div>
+      )}
     </div>
   );
 };
