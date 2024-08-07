@@ -1,33 +1,33 @@
 import React, { useEffect, useRef, useState } from 'react';
 import backgroundImageSrc from '../images/22422-3840x2160-desktop-4k-leaf-background-image.jpg';
-import characterImageSrc from '../images/new-character.png'; // Path to new character image
-import obstacleImageSrc from '../images/obstacle-bottom.png'; 
+import birdImage1Src from '../images/bird-fly-1.png'; // First frame of main bird animation
+import birdImage2Src from '../images/bird-fly-2.png'; // Second frame of main bird animation
+import obstacleBirdSmallSrc from '../images/obstacle-bird-small.png'; // Small obstacle bird
+import obstacleBirdMediumSrc from '../images/obstacle-bird-medium.png'; // Medium obstacle bird
+import obstacleBirdLargeSrc from '../images/obstacle-bird-large.png'; // Large obstacle bird
 
 const CANVAS_WIDTH = window.innerWidth;
 const CANVAS_HEIGHT = window.innerHeight;
-const CHARACTER_WIDTH = 50;
-const CHARACTER_HEIGHT = 50;
-const OBSTACLE_WIDTH = 140; // Width of the obstacle
-const OBSTACLE_MIN_HEIGHT = 300; // Minimum height of the obstacle
-const OBSTACLE_MAX_HEIGHT = 600; // Maximum height of the obstacle
-const OBSTACLE_INTERVAL = 4000; // Interval in milliseconds
-const OBSTACLE_SPEED = 10; // Speed at which the obstacle moves
-const JUMP_HEIGHT = 650; // Height of the jump
-const JUMP_DURATION = 600; // Duration of the jump in milliseconds
+const BIRD_WIDTH = 50;
+const BIRD_HEIGHT = 50;
+const OBSTACLE_INTERVAL = 3000; // Interval in milliseconds
+const OBSTACLE_SPEED = 5; // Speed at which obstacles move
 
 interface Obstacle {
   x: number;
   y: number;
+  width: number;
   height: number;
+  image: HTMLImageElement;
 }
 
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [characterY, setCharacterY] = useState(CANVAS_HEIGHT - CHARACTER_HEIGHT);
-  const [isJumping, setIsJumping] = useState(false);
+  const [birdY, setBirdY] = useState(CANVAS_HEIGHT / 2 - BIRD_WIDTH / 2);
   const [isGameOver, setIsGameOver] = useState(false);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [score, setScore] = useState(0);
+  const [currentBirdImage, setCurrentBirdImage] = useState(birdImage1Src);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,26 +39,37 @@ const Game: React.FC = () => {
     const backgroundImage = new Image();
     backgroundImage.src = backgroundImageSrc;
 
-    const characterImage = new Image();
-    characterImage.src = characterImageSrc;
+    const birdImage1 = new Image();
+    birdImage1.src = birdImage1Src;
 
-    const obstacleImage = new Image();
-    obstacleImage.src = obstacleImageSrc;
+    const birdImage2 = new Image();
+    birdImage2.src = birdImage2Src;
 
-    const drawImages = () => {
-      context.drawImage(backgroundImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      context.drawImage(characterImage, 50, characterY, CHARACTER_WIDTH, CHARACTER_HEIGHT);
+    const obstacleBirdSmall = new Image();
+    obstacleBirdSmall.src = obstacleBirdSmallSrc;
+
+    const obstacleBirdMedium = new Image();
+    obstacleBirdMedium.src = obstacleBirdMediumSrc;
+
+    const obstacleBirdLarge = new Image();
+    obstacleBirdLarge.src = obstacleBirdLargeSrc;
+
+    const drawMainBird = () => {
+      const birdImage = new Image();
+      birdImage.src = currentBirdImage;
+      context.drawImage(birdImage, 50, birdY, BIRD_WIDTH, BIRD_HEIGHT);
     };
 
     const drawObstacles = () => {
       obstacles.forEach((obs) => {
-        context.drawImage(obstacleImage, obs.x, CANVAS_HEIGHT - obs.height, OBSTACLE_WIDTH, obs.height);
+        context.drawImage(obs.image, obs.x, obs.y, obs.width, obs.height);
       });
     };
 
     const updateCanvas = () => {
       context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      drawImages();
+      context.drawImage(backgroundImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      drawMainBird();
       drawObstacles();
     };
 
@@ -68,96 +79,129 @@ const Game: React.FC = () => {
       requestAnimationFrame(gameLoop);
     };
 
+    // Start the game loop after all images have loaded
     backgroundImage.onload = () => {
-      characterImage.onload = () => {
-        obstacleImage.onload = () => {
-          gameLoop();
+      birdImage1.onload = () => {
+        birdImage2.onload = () => {
+          obstacleBirdSmall.onload = () => {
+            obstacleBirdMedium.onload = () => {
+              obstacleBirdLarge.onload = () => {
+                gameLoop();
+              };
+            };
+          };
         };
       };
     };
 
+    // Handle image load errors
     backgroundImage.onerror = () => console.error('Error loading background image');
-    characterImage.onerror = () => console.error('Error loading character image');
-    obstacleImage.onerror = () => console.error('Error loading obstacle image');
-  }, [characterY, obstacles, isGameOver]);
+    birdImage1.onerror = () => console.error('Error loading bird image 1');
+    birdImage2.onerror = () => console.error('Error loading bird image 2');
+    obstacleBirdSmall.onerror = () => console.error('Error loading small obstacle bird image');
+    obstacleBirdMedium.onerror = () => console.error('Error loading medium obstacle bird image');
+    obstacleBirdLarge.onerror = () => console.error('Error loading large obstacle bird image');
+  }, [birdY, obstacles, isGameOver, currentBirdImage]);
 
   useEffect(() => {
-    const obstacleInterval = setInterval(() => {
-      if (isGameOver) return;
-
-      const height = Math.random() * (OBSTACLE_MAX_HEIGHT - OBSTACLE_MIN_HEIGHT) + OBSTACLE_MIN_HEIGHT;
-      const y = CANVAS_HEIGHT - height;
-
-      setObstacles((prev) => [
-        ...prev,
-        { x: CANVAS_WIDTH, y, height }
-      ]);
-      setScore((prev) => prev + 1);
-    }, OBSTACLE_INTERVAL);
-
-    return () => clearInterval(obstacleInterval);
-  }, [isGameOver]);
-
-  useEffect(() => {
-    const moveObstacles = () => {
-      setObstacles((prev) => {
-        const updatedObstacles = prev
-          .map((obs) => ({ ...obs, x: obs.x - OBSTACLE_SPEED }))
-          .filter((obs) => obs.x + OBSTACLE_WIDTH > 0); // Remove obstacles that move off-screen
-
-        return updatedObstacles;
-      });
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
     };
 
-    const interval = setInterval(moveObstacles, 100);
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const birdAnimationInterval = setInterval(() => {
+      setCurrentBirdImage((prevImage) =>
+        prevImage === birdImage1Src ? birdImage2Src : birdImage1Src
+      );
+    }, 200); // Adjust this interval to change the animation speed
+
+    return () => clearInterval(birdAnimationInterval);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isGameOver) return;
+
+      setObstacles((prev) => {
+        const newObstacles = prev.map((obs) => ({ ...obs, x: obs.x - OBSTACLE_SPEED }));
+        const filteredObstacles = newObstacles.filter((obs) => obs.x > -obs.width);
+
+        // Create a new obstacle every OBSTACLE_INTERVAL
+        if (filteredObstacles.length === 0 || Math.random() < 0.1) {
+          setScore((prevScore) => prevScore + 1);
+
+          const obstacleSize = Math.random();
+          let obstacleImage, obstacleWidth, obstacleHeight;
+
+          if (obstacleSize < 0.33) {
+            obstacleImage = new Image();
+            obstacleImage.src = obstacleBirdSmallSrc;
+            obstacleWidth = BIRD_WIDTH;
+            obstacleHeight = BIRD_HEIGHT;
+          } else if (obstacleSize < 0.66) {
+            obstacleImage = new Image();
+            obstacleImage.src = obstacleBirdMediumSrc;
+            obstacleWidth = BIRD_WIDTH * 1.5;
+            obstacleHeight = BIRD_HEIGHT * 1.5;
+          } else {
+            obstacleImage = new Image();
+            obstacleImage.src = obstacleBirdLargeSrc;
+            obstacleWidth = BIRD_WIDTH * 2;
+            obstacleHeight = BIRD_HEIGHT * 2;
+          }
+
+          const yPosition = Math.random() * (CANVAS_HEIGHT - obstacleHeight);
+
+          return [
+            ...filteredObstacles,
+            { x: CANVAS_WIDTH, y: yPosition, width: obstacleWidth, height: obstacleHeight, image: obstacleImage },
+          ];
+        }
+        return filteredObstacles;
+      });
+    }, 100);
 
     return () => clearInterval(interval);
   }, [isGameOver]);
 
   useEffect(() => {
-    const checkCollision = () => {
-      for (const obs of obstacles) {
-        if (
-          50 + CHARACTER_WIDTH > obs.x && // Check if the character is within the horizontal bounds of the obstacle
-          50 < obs.x + OBSTACLE_WIDTH && // Check if the character is within the horizontal bounds of the obstacle
-          characterY < CANVAS_HEIGHT - obs.height && // Check if the character is within the vertical bounds of the obstacle
-          characterY + CHARACTER_HEIGHT > CANVAS_HEIGHT - obs.height // Check if the character is within the vertical bounds of the obstacle
-        ) {
-          setIsGameOver(true);
-          break;
-        }
-      }
-    };
-
-    checkCollision();
-  }, [characterY, obstacles]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === ' ') { // Use spacebar to jump
-        if (!isJumping) {
-          setIsJumping(true);
-          const jumpStart = Date.now();
-
-          const jumpInterval = setInterval(() => {
-            const elapsedTime = Date.now() - jumpStart;
-            if (elapsedTime < JUMP_DURATION / 2) {
-              setCharacterY(CANVAS_HEIGHT - CHARACTER_HEIGHT - (JUMP_HEIGHT * (elapsedTime / (JUMP_DURATION / 2))));
-            } else if (elapsedTime < JUMP_DURATION) {
-              setCharacterY(CANVAS_HEIGHT - CHARACTER_HEIGHT - (JUMP_HEIGHT * (1 - (elapsedTime - JUMP_DURATION / 2) / (JUMP_DURATION / 2))));
-            } else {
-              clearInterval(jumpInterval);
-              setCharacterY(CANVAS_HEIGHT - CHARACTER_HEIGHT);
-              setIsJumping(false);
-            }
-          }, 20);
-        }
+      if (event.key === 'ArrowUp') {
+        setBirdY((prev) => Math.max(prev - 20, 0));
+      } else if (event.key === 'ArrowDown') {
+        setBirdY((prev) => Math.min(prev + 20, CANVAS_HEIGHT - BIRD_HEIGHT));
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isJumping]);
+  }, []);
+
+  useEffect(() => {
+    const checkCollision = () => {
+      obstacles.forEach((obstacle) => {
+        if (
+          birdY < obstacle.y + obstacle.height &&
+          birdY + BIRD_HEIGHT > obstacle.y &&
+          50 < obstacle.x + obstacle.width &&
+          50 + BIRD_WIDTH > obstacle.x
+        ) {
+          setIsGameOver(true);
+        }
+      });
+    };
+
+    checkCollision();
+  }, [birdY, obstacles]);
 
   return (
     <div>
