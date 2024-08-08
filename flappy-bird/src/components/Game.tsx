@@ -14,7 +14,7 @@ const CANVAS_HEIGHT = window.innerHeight;
 const BIRD_WIDTH = 50;
 const BIRD_HEIGHT = 50;
 const OBSTACLE_WIDTH = 50;
-const OBSTACLE_SPEED = 5; // Speed at which obstacles move
+const OBSTACLE_SPEED = 16; // Increased speed for obstacles (twice as fast)
 const OBSTACLE_INTERVAL = 3000; // Interval for creating new obstacle set
 
 interface Obstacle {
@@ -105,7 +105,7 @@ const Game: React.FC = () => {
       const drawObstacles = () => {
         obstacles.forEach((obs) => {
           const image = obstacleImages[obs.type][obs.size][birdFrame % 2];
-          context.drawImage(image, obs.x, obs.type === 'top' ? 0 : CANVAS_HEIGHT - obs.height, OBSTACLE_WIDTH, obs.height);
+          context.drawImage(image, obs.x, obs.y, OBSTACLE_WIDTH, obs.height);
         });
       };
 
@@ -151,9 +151,11 @@ const Game: React.FC = () => {
       const obstacleHeight = getObstacleHeight(obstacleSize);
 
       const obstacleType: 'top' | 'bottom' = Math.random() > 0.5 ? 'top' : 'bottom';
+
+      // Random altitude for the obstacle
       const yPosition = obstacleType === 'top'
-        ? Math.random() * (CANVAS_HEIGHT - obstacleHeight)
-        : CANVAS_HEIGHT - obstacleHeight;
+        ? Math.random() * (CANVAS_HEIGHT - obstacleHeight - 100) // Extra space for top obstacles
+        : Math.random() * (CANVAS_HEIGHT - obstacleHeight - 100); // Extra space for bottom obstacles
 
       return { x: CANVAS_WIDTH, y: yPosition, height: obstacleHeight, type: obstacleType, size: obstacleSize };
     };
@@ -196,14 +198,12 @@ const Game: React.FC = () => {
     const checkCollision = () => {
       obstacles.forEach((obstacle) => {
         if (
-          birdY < obstacle.y ||
-          birdY + BIRD_HEIGHT > obstacle.y + obstacle.height ||
-          birdY < 0 ||
-          birdY + BIRD_HEIGHT > CANVAS_HEIGHT
+          birdY + BIRD_HEIGHT > obstacle.y &&
+          birdY < obstacle.y + obstacle.height &&
+          50 + BIRD_WIDTH > obstacle.x &&
+          50 < obstacle.x + OBSTACLE_WIDTH
         ) {
-          if (obstacle.x < 50 + BIRD_WIDTH && obstacle.x + OBSTACLE_WIDTH > 50) {
-            setIsGameOver(true);
-          }
+          setIsGameOver(true);
         }
       });
     };
