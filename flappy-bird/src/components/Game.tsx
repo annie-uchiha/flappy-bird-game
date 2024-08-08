@@ -14,8 +14,8 @@ const CANVAS_HEIGHT = window.innerHeight;
 const BIRD_WIDTH = 50;
 const BIRD_HEIGHT = 50;
 const OBSTACLE_WIDTH = 50;
-const OBSTACLE_SPEED = 16; // Increased speed for obstacles (twice as fast)
-const OBSTACLE_INTERVAL = 3000; // Interval for creating new obstacle set
+const OBSTACLE_SPEED = 10; // Faster speed for obstacles
+const OBSTACLE_INTERVAL = 2000; // Shorter interval for obstacle generation
 
 interface Obstacle {
   x: number;
@@ -145,7 +145,7 @@ const Game: React.FC = () => {
     let obstacleTimer = Date.now();
 
     const createObstacle = () => {
-      const sizes: ('small' | 'medium' | 'large')[] = ['small', 'large', 'medium'];
+      const sizes: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'];
       const currentSizeIndex = Math.floor(Date.now() / OBSTACLE_INTERVAL) % sizes.length;
       const obstacleSize = sizes[currentSizeIndex];
       const obstacleHeight = getObstacleHeight(obstacleSize);
@@ -169,6 +169,7 @@ const Game: React.FC = () => {
 
         if (Date.now() - obstacleTimer > OBSTACLE_INTERVAL) {
           obstacleTimer = Date.now();
+          setScore(prevScore => prevScore + 1); // Increment score when obstacle is created
           return [...filteredObstacles, createObstacle()];
         }
 
