@@ -14,7 +14,7 @@ const CANVAS_HEIGHT = window.innerHeight;
 const BIRD_WIDTH = 50;
 const BIRD_HEIGHT = 50;
 const OBSTACLE_WIDTH = 50;
-const OBSTACLE_SPEED = 10; // Faster speed for obstacles
+const OBSTACLE_SPEED = 20; // Faster speed for obstacles
 const OBSTACLE_INTERVAL = 2000; // Shorter interval for obstacle generation
 
 interface Obstacle {
